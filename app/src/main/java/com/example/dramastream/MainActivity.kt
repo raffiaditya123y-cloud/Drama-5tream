@@ -22,96 +22,318 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
-data class Episode(val number:Int,val url:String)
-data class Drama(val title:String,val genre:String,val episodes:List<Episode>)
-
-const val DEMO_HLS="https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"
-
-val demoDramas=listOf(
- Drama("Pecahan Langit","Kultivasi • Fantasi",(1..8).map{Episode(it,DEMO_HLS)}),
- Drama("Legenda Pedang Abadi","Aksi • Fantasi",(1..8).map{Episode(it,DEMO_HLS)}),
- Drama("Jejak Sang Kaisar","Sejarah • Aksi",(1..8).map{Episode(it,DEMO_HLS)})
+data class Episode(
+    val number: Int,
+    val url: String
 )
 
-class MainActivity:ComponentActivity(){
- override fun onCreate(savedInstanceState:Bundle?){
-  super.onCreate(savedInstanceState)
-  setContent{App()}
- }
-}
+data class Drama(
+    val title: String,
+    val genre: String,
+    val episodes: List<Episode>
+)
 
-@Composable
-fun App(){
- var selected by remember{mutableStateOf<Drama?>(null)}
- MaterialTheme(colorScheme=darkColorScheme(
-  background=Color(0xFF101014),surface=Color(0xFF19191F),primary=Color(0xFFE85D75)
-  )){
-  if(selected==null)Home{selected=it}else Detail(selected!!){selected=null}
- }
-}
+const val DEMO_HLS =
+    "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"
 
-@Composable
-fun Home(onDrama:(Drama)->Unit){
- var query by remember{mutableStateOf("")}
- val list=demoDramas.filter{it.title.contains(query,true)}
- Column(Modifier.fillMaxSize().background(Color(0xFF101014)).padding(18.dp)){
-  Text("DramaStream",fontSize=30.sp)
-  Text("Nonton drama versi kamu",color=Color.LightGray)
-  Spacer(Modifier.height(12.dp))
-  OutlinedTextField(query,{query=it},Modifier.fillMaxWidth(),placeholder={Text("Cari drama...")},singleLine=true)
-  Spacer(Modifier.height(14.dp))
-  LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp)){
-   items(list){d->
-    Card(Modifier.fillMaxWidth().clickable{onDrama(d)},colors=CardDefaults.cardColors(containerColor=Color(0xFF19191F))){
-     Column(Modifier.padding(16.dp)){
-      Text(d.title,fontSize=20.sp)
-      Text(d.genre,color=Color.LightGray)
-      Text("${d.episodes.size} episode",color=Color.Gray)
-     }
+val demoDramas = listOf(
+    Drama(
+        "Pecahan Langit",
+        "Kultivasi • Fantasi",
+        (1..8).map { Episode(it, DEMO_HLS) }
+    ),
+    Drama(
+        "Legenda Pedang Abadi",
+        "Aksi • Fantasi",
+        (1..8).map { Episode(it, DEMO_HLS) }
+    ),
+    Drama(
+        "Jejak Sang Kaisar",
+        "Sejarah • Aksi",
+        (1..8).map { Episode(it, DEMO_HLS) }
+    )
+)
+
+class MainActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContent {
+            App()
+        }
     }
-   }
-  }
- }
 }
 
 @Composable
-fun Detail(drama:Drama,onBack:()->Unit){
- var ep by remember{mutableStateOf<Episode?>(null)}
- var favorite by remember{mutableStateOf(false)}
- Column(Modifier.fillMaxSize().background(Color(0xFF101014)).padding(18.dp)){
-  Text("‹ Kembali",Modifier.clickable{onBack()})
-  Spacer(Modifier.height(10.dp))
-  Row(verticalAlignment=Alignment.CenterVertically){
-   Column(Modifier.weight(1f)){Text(drama.title,fontSize=27.sp);Text(drama.genre,color=Color.LightGray)}
-   Text(
-    text = if (favorite) "♥" else "♡",
-    fontSize = 30.sp,
-    modifier = Modifier.clickable { favorite = !favorite }
-)
-  }
-  Spacer(Modifier.height(12.dp))
-  ep?.let{
-   HlsPlayer(it.url)
-   Spacer(Modifier.height(8.dp))
-   Text("Episode ${it.number} sedang diputar",color=Color.LightGray)
-  }
-  Spacer(Modifier.height(12.dp))
-  Text("Episode",fontSize=20.sp)
-  LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
-   items(drama.episodes){e->
-    Button({ep=e},Modifier.fillMaxWidth(),shape=RoundedCornerShape(12.dp)){Text("Episode ${e.number}")}
-   }
-  }
- }
+fun App() {
+
+    var selected by remember {
+        mutableStateOf<Drama?>(null)
+    }
+
+    MaterialTheme(
+        colorScheme = darkColorScheme(
+            background = Color(0xFF101014),
+            surface = Color(0xFF19191F),
+            primary = Color(0xFFE85D75)
+        )
+    ) {
+        if (selected == null) {
+            Home {
+                selected = it
+            }
+        } else {
+            Detail(
+                drama = selected!!,
+                onBack = {
+                    selected = null
+                }
+            )
+        }
+    }
 }
 
 @Composable
-fun HlsPlayer(url:String){
- val context=LocalContext.current
- val player=remember(url){ExoPlayer.Builder(context).build().apply{
-  setMediaItem(MediaItem.fromUri(url));prepare();playWhenReady=true
- }}
- DisposableEffect(player){onDispose{player.release()}}
- AndroidView({ctx->PlayerView(ctx).apply{this.player=player;useController=true}},
-  Modifier.fillMaxWidth().height(220.dp))
+fun Home(
+    onDrama: (Drama) -> Unit
+) {
+
+    var query by remember {
+        mutableStateOf("")
+    }
+
+    val list = demoDramas.filter {
+        it.title.contains(query, ignoreCase = true)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF101014))
+            .padding(18.dp)
+    ) {
+
+        Text(
+            text = "DramaStream",
+            fontSize = 30.sp
+        )
+
+        Text(
+            text = "Nonton drama versi kamu",
+            color = Color.LightGray
+        )
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+
+        OutlinedTextField(
+            value = query,
+            onValueChange = {
+                query = it
+            },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text("Cari drama...")
+            },
+            singleLine = true
+        )
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            items(list) { drama ->
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onDrama(drama)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF19191F)
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+
+                        Text(
+                            text = drama.title,
+                            fontSize = 20.sp
+                        )
+
+                        Text(
+                            text = drama.genre,
+                            color = Color.LightGray
+                        )
+
+                        Text(
+                            text = "${drama.episodes.size} episode",
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Detail(
+    drama: Drama,
+    onBack: () -> Unit
+) {
+
+    var ep by remember {
+        mutableStateOf<Episode?>(null)
+    }
+
+    var favorite by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF101014))
+            .padding(18.dp)
+    ) {
+
+        Text(
+            text = "‹ Kembali",
+            modifier = Modifier.clickable {
+                onBack()
+            }
+        )
+
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = drama.title,
+                    fontSize = 27.sp
+                )
+
+                Text(
+                    text = drama.genre,
+                    color = Color.LightGray
+                )
+            }
+
+            Text(
+                text = if (favorite) "♥" else "♡",
+                fontSize = 30.sp,
+                modifier = Modifier.clickable {
+                    favorite = !favorite
+                }
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+
+        ep?.let { episode ->
+
+            HlsPlayer(
+                url = episode.url
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "Episode ${episode.number} sedang diputar",
+                color = Color.LightGray
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+
+        Text(
+            text = "Episode",
+            fontSize = 20.sp
+        )
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            items(drama.episodes) { episode ->
+
+                Button(
+                    onClick = {
+                        ep = episode
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Episode ${episode.number}"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HlsPlayer(
+    url: String
+) {
+
+    val context = LocalContext.current
+
+    val player = remember(url) {
+
+        ExoPlayer
+            .Builder(context)
+            .build()
+            .apply {
+                setMediaItem(
+                    MediaItem.fromUri(url)
+                )
+                prepare()
+                playWhenReady = true
+            }
+    }
+
+    DisposableEffect(player) {
+
+        onDispose {
+            player.release()
+        }
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                this.player = player
+                useController = true
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+    )
 }
