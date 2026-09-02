@@ -83,7 +83,11 @@ fun Detail(drama:Drama,onBack:()->Unit){
   Spacer(Modifier.height(10.dp))
   Row(verticalAlignment=Alignment.CenterVertically){
    Column(Modifier.weight(1f)){Text(drama.title,fontSize=27.sp);Text(drama.genre,color=Color.LightGray)}
-   Text(if(favorite)"♥" else "♡",fontSize=30.sp,Modifier.clickable{favorite=!favorite})
+   Text(
+    text = if (favorite) "♥" else "♡",
+    fontSize = 30.sp,
+    modifier = Modifier.clickable { favorite = !favorite }
+)
   }
   Spacer(Modifier.height(12.dp))
   ep?.let{
